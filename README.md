@@ -11,7 +11,7 @@ A simple **async MJPEG live stream** example with multi-client support. Captures
 * 👥 Multiple clients can connect simultaneously
 * 📸 `/video` → live stream, `/snapshot` → single frame
 
-## Raspberry Pi Example Resolutions/FPS
+## Raspberry Pi 5 & CMv3 Example Resolutions/FPS
 
 * **1536×864** → \~100 FPS
 * **2304×1296** → \~50 FPS
