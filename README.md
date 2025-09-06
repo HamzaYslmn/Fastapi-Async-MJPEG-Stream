@@ -9,7 +9,7 @@ A simple **async MJPEG live stream** example with multi-client support. Captures
 * 🚀 Async MJPEG streaming with FastAPI
 * 📷 OpenCV & Raspberry Pi **Picamera2** support
 * 👥 Multiple clients can connect simultaneously
-* 📸 `/video` → live stream, `/snapshot` → single frame
+* 📸 `/video` → live stream, `/snap` → single frame
 
 ## Raspberry Pi 5 & CMv3 Example Resolutions/FPS
 
