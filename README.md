@@ -17,6 +17,9 @@ A simple **async MJPEG live stream** example with multi-client support. Captures
 * **2304×1296** → \~50 FPS
 * **4608×2592** → \~14 FPS
 
+<img width="846" height="390" alt="image" src="https://github.com/user-attachments/assets/183e74ee-6d50-4271-bb4b-5a111ae6ee76" />
+
+
 ## Installation
 
 ```bash
@@ -39,3 +42,5 @@ Then open in browser:
 ## License
 
 AGPL-3.0
+
+
