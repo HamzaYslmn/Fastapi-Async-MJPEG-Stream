@@ -6,6 +6,7 @@ import asyncio
 import time
 
 app = FastAPI()
+
 class Camera:
     def __init__(self, grab_func):
         self.grab = grab_func
@@ -30,8 +31,6 @@ class Camera:
 
 try:
     from picamera2 import Picamera2  # type: ignore
-    import logging
-    logging.getLogger("picamera2").setLevel(logging.WARNING)
 
     def _open_picam(size: tuple[int, int] = (2592, 2592)) -> Camera:
         cam = Picamera2()
@@ -87,7 +86,6 @@ def get_camera_fps(grab_func):
         frame_count += 1
     end_time = time.time()
     fps = frame_count / (end_time - start_time)
-    print(f"Camera FPS: {fps:.2f}")
     return fps
 
 fps = get_camera_fps(camera.grab)
@@ -104,11 +102,11 @@ async def generate_frames():
             yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" +
                    buffer.tobytes() + b"\r\n")
 
-@app.get("/video", summary="Live MJPEG camera feed")
+@app.get("/video")
 async def video_feed():
     return StreamingResponse(generate_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
 
-@app.get("/snapshot", summary="Tek seferlik kamera görüntüsü")
+@app.get("/snap")
 async def snapshot():
     frame = camera.frame()
     if frame is None:
