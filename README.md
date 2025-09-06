@@ -12,6 +12,7 @@ A simple **async MJPEG live stream** example with multi-client support. Captures
 * 📸 `/video` → live stream, `/snap` → single frame
 
 ## Raspberry Pi 5 & CMv3 Example Resolutions/FPS
+### Use xStream_HW.py
 
 * **1536×864** → \~100 FPS
 * **2304×1296** → \~50 FPS
