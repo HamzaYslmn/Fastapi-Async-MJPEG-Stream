@@ -7,7 +7,7 @@ import time
 
 app = FastAPI()
 latest_frame = None
-fps = 15
+fps = 1
 
 def get_camera_fps(cap):
     for _ in range(10):
@@ -43,12 +43,13 @@ threading.Thread(target=camera_worker, daemon=True).start()
 
 async def generate_frames():
     global latest_frame, fps
+    next_tick = time.perf_counter()
     while True:
-        await asyncio.sleep(1 / fps)
+        next_tick += 1 / fps
+        await asyncio.sleep(max(next_tick - time.perf_counter(), 0.0))
         if latest_frame:
             yield (b"--frame\r\n"
                    b"Content-Type: image/jpeg\r\n\r\n" + latest_frame + b"\r\n")
-
 @app.get("/video")
 async def video_feed():
     return StreamingResponse(generate_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
