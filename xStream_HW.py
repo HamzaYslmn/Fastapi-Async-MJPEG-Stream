@@ -12,9 +12,6 @@ try:
     USE_PICAMERA = True
 except ImportError:
     USE_PICAMERA = False
-
-app = FastAPI()
-
 class LiveBroadcast(io.BufferedIOBase):
     def __init__(self):
         self._lock = threading.Lock()
@@ -54,6 +51,8 @@ if USE_PICAMERA:
     picam2 = Picamera2()
     picam2.configure(
         picam2.create_video_configuration(
+            #main= {"size": (1536 , 864), "format": "RGB888"}, controls={"AfMode": 2, "FrameRate": 50}
+            #main= {"size": (2304, 1296), "format": "RGB888"}, controls={"AfMode": 2, "FrameRate": 50}
             main={"size": (4608, 2592), "format": "RGB888"}, controls={"AfMode": 2, "FrameRate": 30}
         )
     )
@@ -70,6 +69,9 @@ async def stream_generator():
             last_frame = frame
             yield boundary + frame + b"\r\n"
         await asyncio.sleep(0.01)
+
+# ───── FastAPI router ───────────────────────────────────────────────────────
+app = FastAPI()
 
 @app.get("/video")
 async def video_stream():
