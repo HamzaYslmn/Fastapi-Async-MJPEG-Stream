@@ -81,19 +81,16 @@ async def video_stream():
         headers={"Cache-Control": "no-cache"}
     )
 
-@app.get("/snap")
+@router.get("/snap")
 async def snapshot():
     if USE_PICAMERA:
         frame = await asyncio.to_thread(picam2.capture_array)
-        _, buffer = cv2.imencode('.jpg', frame)
+        _, buffer = await asyncio.to_thread(cv2.imencode, '.jpg', frame)
         return Response(buffer.tobytes(), media_type="image/jpeg")
     else:
-        cap = _open_cv_cam()
-        ret, frame = cap.read()
-        cap.release()
-        if ret:
-            _, buffer = cv2.imencode('.jpg', frame)
-            return Response(buffer.tobytes(), media_type="image/jpeg")
+        frame_data = await asyncio.to_thread(broadcast.get_frame)
+        if frame_data:
+            return Response(frame_data, media_type="image/jpeg")
         return Response(status_code=503)
 
 if __name__ == "__main__":
