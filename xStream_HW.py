@@ -1,5 +1,6 @@
-from fastapi import FastAPI, Response
+from fastapi import APIRouter, Response
 from fastapi.responses import StreamingResponse
+from contextlib import asynccontextmanager
 import asyncio
 import cv2
 import threading
@@ -10,8 +11,11 @@ try:
     from picamera2.encoders import MJPEGEncoder, Quality #type: ignore
     from picamera2.outputs import FileOutput #type: ignore
     USE_PICAMERA = True
+    print("Using Picamera2")
 except ImportError:
     USE_PICAMERA = False
+    print("Using OpenCV.")
+
 class LiveBroadcast(io.BufferedIOBase):
     def __init__(self):
         self._lock = threading.Lock()
@@ -26,10 +30,6 @@ class LiveBroadcast(io.BufferedIOBase):
         with self._lock:
             return self._frame
 
-    def update_frame(self, frame):
-        _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
-        self.write(buffer.tobytes())
-
 def _open_cv_cam(cam_src=0):
     cap = cv2.VideoCapture(cam_src, cv2.CAP_DSHOW if isinstance(cam_src, int) else 0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 3840)
@@ -43,7 +43,8 @@ def cv2_capture_thread():
     while True:
         ret, frame = cap.read()
         if ret:
-            broadcast.update_frame(frame)
+            _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 95])
+            broadcast.write(buffer.tobytes())
 
 broadcast = LiveBroadcast()
 
@@ -51,14 +52,17 @@ if USE_PICAMERA:
     picam2 = Picamera2()
     picam2.configure(
         picam2.create_video_configuration(
-            #main= {"size": (1536 , 864), "format": "RGB888"}, controls={"AfMode": 2, "FrameRate": 50}
+            #main= {"size": (1536 , 864), "format": "RGB888"}, controls={"AfMode": 2, "FrameRate": 100}
             #main= {"size": (2304, 1296), "format": "RGB888"}, controls={"AfMode": 2, "FrameRate": 50}
-            main={"size": (4608, 2592), "format": "RGB888"}, controls={"AfMode": 2, "FrameRate": 30}
+            main={"size": (4608, 2592), "format": "RGB888"}, controls={"AfMode": 2, "FrameRate": 14}
         )
     )
-    picam2.start_recording(MJPEGEncoder(), FileOutput(broadcast), quality=Quality.HIGH)
-else:
-    threading.Thread(target=cv2_capture_thread, daemon=True).start()
+
+def start_camera():
+    if USE_PICAMERA:
+        picam2.start_recording(MJPEGEncoder(), FileOutput(broadcast), quality=Quality.HIGH)
+    else:
+        threading.Thread(target=cv2_capture_thread, daemon=True).start()
 
 async def stream_generator():
     boundary = b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
@@ -71,9 +75,20 @@ async def stream_generator():
         await asyncio.sleep(0.01)
 
 # ───── FastAPI router ───────────────────────────────────────────────────────
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(router: APIRouter): #Ensure call once
+    try:
+        start_camera()
+        yield
+    except asyncio.CancelledError:
+        if USE_PICAMERA:
+            picam2.stop_recording()
+    except Exception as e:
+        print(f"Camera error: {e}")
+        
+router = APIRouter(prefix="/camera", tags=["camera"], lifespan=lifespan)
 
-@app.get("/video")
+@router.get("/video") #TODO: Implement low,mid,high quality settings
 async def video_stream():
     return StreamingResponse(
         stream_generator(),
@@ -95,4 +110,4 @@ async def snapshot():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(router, host="0.0.0.0", port=8000, log_level="info")
