@@ -51,7 +51,8 @@ broadcast = LiveBroadcast()
 if USE_PICAMERA:
     picam2 = Picamera2()
     sensor_res = picam2.sensor_resolution
-    highres_stream = {"size": (4608, 2592), "format": "RGB888"}
+    print(f"Camera sensor resolution: {sensor_res}")
+    highres_stream = {"size": sensor_res, "format": "RGB888"}
     midres_stream = {"size": (2304, 1296), "format": "RGB888"}
     lowres_stream = {"size": (1536 , 864), "format": "RGB888"}
     video_config = picam2.create_video_configuration(
