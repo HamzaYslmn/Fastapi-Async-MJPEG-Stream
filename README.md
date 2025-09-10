@@ -25,6 +25,9 @@ A simple **async MJPEG live stream** example with multi-client support. Captures
 
 ```bash
 pip install fastapi uvicorn opencv-python
+rpicam-hello -t 0 --viewfinder-mode 4608:2592:10:P
+sudo sysctl vm.swappiness=5
+sudo sysctl -p
 ```
 
 On Raspberry Pi, install `picamera2` as well.
